@@ -30,6 +30,7 @@ from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
+from litex.soc.cores.bitbang import I2CMaster
 
 from litex.build.lattice.oxide import oxide_args, oxide_argdict
 
@@ -103,6 +104,13 @@ class BaseSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
         self.add_csr("leds")
 
+        refclk = platform.request("clk27_0")
+        cam_mclk = platform.request("camera_mclk", 0)
+        rst = platform.request("cam_reset", 0) # connected to button; request just for pullup
+        self.comb += cam_mclk.eq(refclk)
+
+        self.submodules.i2c = I2CMaster(platform.request("i2c", 0))
+        self.add_csr("i2c")
 
 # Build --------------------------------------------------------------------------------------------
 
