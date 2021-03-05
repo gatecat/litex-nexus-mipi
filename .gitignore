@@ -1,0 +1,7 @@
+*.pyc
+*.o
+*.bit
+*.json
+*.fasm
+*.log
+build/
