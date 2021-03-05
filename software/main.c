@@ -10,6 +10,7 @@
 #include <console.h>
 #include <generated/csr.h>
 
+#include "camera.h"
 
 /*-----------------------------------------------------------------------*/
 /* Uart                                                                  */
@@ -84,6 +85,7 @@ static void help(void)
 	puts("Available commands:");
 	puts("help               - Show this command");
 	puts("reboot             - Reboot CPU");
+	puts("cam_init           - Run camera initialisation");
 }
 
 static void reboot_cmd(void)
@@ -103,6 +105,8 @@ static void console_service(void)
 		help();
 	else if(strcmp(token, "reboot") == 0)
 		reboot_cmd();
+	else if(strcmp(token, "cam_init") == 0)
+		camera_init();
 	prompt();
 }
 
@@ -114,9 +118,11 @@ int main(void)
 #endif
 	uart_init();
 
+	camera_init();
 
 	help();
 	prompt();
+
 
 	while(1) {
 		console_service();

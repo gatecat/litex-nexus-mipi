@@ -3,7 +3,7 @@ BUILD_DIR=../build/crosslink_nx_vip
 include $(BUILD_DIR)/software/include/generated/variables.mak
 include $(SOC_DIRECTORY)/software/common.mak
 
-OBJECTS=isr.o main.o
+OBJECTS=isr.o main.o camera.o
 
 all: software.bin
 
