@@ -5,3 +5,5 @@
 *.fasm
 *.log
 build/
+__pycache__
+
