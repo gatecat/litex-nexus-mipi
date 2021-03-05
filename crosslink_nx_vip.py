@@ -68,6 +68,7 @@ class BaseSoC(SoCCore):
     SoCCore.mem_map = {
         "rom":              0x00000000,
         "sram":             0x40000000,
+        "main_ram":         0x50000000,
         "csr":              0xf0000000,
     }
     def __init__(self, sys_clk_freq=int(75e6), hyperram="none", toolchain="radiant", **kwargs):
@@ -86,17 +87,15 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
 
-        if hyperram == "none":
-            # 128KB LRAM (used as SRAM) ------------------------------------------------------------
-            size = 128*kB
-            self.submodules.spram = NXLRAM(32, size)
-            self.register_mem("sram", self.mem_map["sram"], self.spram.bus, size)
-        else:
-            # Use HyperRAM generic PHY as SRAM -----------------------------------------------------
-            size = 8*1024*kB
-            hr_pads = platform.request("hyperram", int(hyperram))
-            self.submodules.hyperram = HyperRAM(hr_pads)
-            self.register_mem("sram", self.mem_map["sram"], self.hyperram.bus, size)
+        # 128KB LRAM (used as SRAM) ------------------------------------------------------------
+        size = 128*kB
+        self.submodules.spram = NXLRAM(32, size)
+        self.register_mem("sram", self.mem_map["sram"], self.spram.bus, size)
+        # Use HyperRAM generic PHY as main ram -----------------------------------------------------
+        size = 8*1024*kB
+        hr_pads = platform.request("hyperram", 0)
+        self.submodules.hyperram = HyperRAM(hr_pads)
+        self.register_mem("main_ram", self.mem_map["main_ram"], self.hyperram.bus, size)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
