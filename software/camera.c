@@ -62,6 +62,35 @@ static unsigned short cam_read16(unsigned char slave_addr, unsigned short addr)
 	return (data_h << 8U) | data_l;
 }
 
+static bool cam_write8(unsigned char slave_addr, unsigned short addr, unsigned char data)
+{
+	if (!cam_addr(slave_addr, addr)) {
+		return 0xFF;
+	}
+	if(!i2c_transmit_byte(data)) {
+		i2c_stop();
+		return false;
+	}
+	i2c_stop();
+
+	return true;
+}
+
+static bool run_init_sequence(const struct imx258_reg *regs, int count)
+{
+	int i;
+	for (i = 0; i < count; i++) {
+		if (!cam_write8(CAM_ADDR, regs[i].address, regs[i].val)) {
+			printf("write %d failed (addr=%04x, data=%02x)!\n", i, regs[i].address, regs[i].val);
+			return false;
+		} 
+	}
+	return true;
+}
+
 void camera_init(void) {
 	printf("IMX258_REG_CHIP_ID %04x\n", cam_read16(CAM_ADDR, IMX258_REG_CHIP_ID));
+	run_init_sequence(mipi_data_rate_640mbps, ARRAY_SIZE(mipi_data_rate_640mbps));
+	run_init_sequence(mode_1048_780_regs, ARRAY_SIZE(mode_1048_780_regs));
+	cam_write8(CAM_ADDR, IMX258_REG_MODE_SELECT, IMX258_MODE_STREAMING);
 }

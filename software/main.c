@@ -86,12 +86,26 @@ static void help(void)
 	puts("help               - Show this command");
 	puts("reboot             - Reboot CPU");
 	puts("cam_init           - Run camera initialisation");
+	puts("freq               - Print frequency counter output");
+	puts("data               - Print 32 words of received MIPI data");
 }
 
 static void reboot_cmd(void)
 {
 	ctrl_reset_write(1);
 }
+
+static void read_freq_cmd(void)
+{
+	printf("Byte clk freq: %dHz\n", clk_byte_freq_value_read());
+}
+
+static void read_data_cmd(void)
+{
+	for (int i = 0; i < 32; i++)
+		printf("%08x %01x\n", hs_rx_data_in_read(), hs_rx_sync_in_read());
+}
+
 
 static void console_service(void)
 {
@@ -107,6 +121,10 @@ static void console_service(void)
 		reboot_cmd();
 	else if(strcmp(token, "cam_init") == 0)
 		camera_init();
+	else if(strcmp(token, "freq") == 0)
+		read_freq_cmd();
+	else if(strcmp(token, "data") == 0)
+		read_data_cmd();
 	prompt();
 }
 
