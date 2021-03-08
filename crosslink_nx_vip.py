@@ -55,7 +55,8 @@ class _CRG(Module):
         self.submodules.sys_clk = sys_osc = NXOSCA()
         sys_osc.create_hf_clk(self.cd_sys, sys_clk_freq)
         platform.add_period_constraint(self.cd_sys.clk, 1e9/sys_clk_freq)
-        rst_n = platform.request("gsrn")
+        # use cam_reset here because it's also hardwired to the reset of the cameras
+        rst_n = platform.request("cam_reset")
 
         # Power On Reset
         por_cycles  = 4096
@@ -109,7 +110,6 @@ class BaseSoC(SoCCore):
 
         refclk = platform.request("clk27_0")
         cam_mclk = platform.request("camera_mclk", 0)
-        rst = platform.request("cam_reset", 0) # connected to button; request just for pullup
         self.comb += cam_mclk.eq(refclk)
 
         self.submodules.i2c = I2CMaster(platform.request("i2c", 0))
