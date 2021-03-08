@@ -2,7 +2,7 @@ from migen import *
 
 # MIPI DPHY core; configured as MIPI CSI-2 receiver with control and interface logic
 class DPHY_CSIRX_CIL(Module):
-    def __init__(self, pads, num_lanes=4, clk_mode="ENABLED", deskew="DISABLED", gearing=8):
+    def __init__(self, pads, num_lanes=4, clk_mode="ENABLED", deskew="DISABLED", gearing=8, loc="TDPHY_CORE2"):
         data_width = num_lanes * gearing
         self.sync_clk = Signal()
         self.sync_rst = Signal()
@@ -43,7 +43,7 @@ class DPHY_CSIRX_CIL(Module):
             p_CM="0b00000000",
             p_CN="0b00000",
             p_CO="0b000",
-            p_CONT_CLOCK_MODE=clk_mode,
+            p_CONT_CLK_MODE=clk_mode,
             p_DESKEW_EN=deskew,
             p_DSI_CSI="CSI2_APP",
             p_EN_CIL="CIL_ENABLED",
@@ -63,8 +63,8 @@ class DPHY_CSIRX_CIL(Module):
             p_U_PRG_HS_PREPARE="0b00",
             p_U_PRG_HS_TRAIL="0b000000",
             p_U_PRG_HS_ZERO="0b000000",
-            p_U_PRG_RXHS_SETTLE="0b11000000",
-            p_UC_PRG_RXHS_SETTLE="0b111000000",
+            p_U_PRG_RXHS_SETTLE="0b000011",
+            p_UC_PRG_RXHS_SETTLE="0b000111",
             i_LMMIRESET_N=1,
             i_BITCKEXT=1,
             i_CLKREF=1,
@@ -91,14 +91,17 @@ class DPHY_CSIRX_CIL(Module):
             o_U2RXSHS=int_sync[2],
             o_U3RXSHS=int_sync[3],
             o_URWDCKHS=self.clk_byte,
-            o_LMMI_READY=self.ready,
-            io_CKN=pads.clkn,
-            io_CKP=pads.clkp,
+            o_LMMIREADY=self.ready,
         )
 
+        if pads is not None:
+            conns["io_CKN"]=pads.clkn
+            conns["io_CKP"]=pads.clkp
+
         for i in range(num_lanes):
-            conns["io_DP{}".format(i)] = pads.dp[i]
-            conns["io_DN{}".format(i)] = pads.dn[i]
+            if pads is not None:
+                conns["io_DP{}".format(i)] = pads.dp[i]
+                conns["io_DN{}".format(i)] = pads.dn[i]
             self.comb += self.hs_rx_data[i*gearing:(i+1)*gearing].eq(int_data[i][0:gearing])
             self.comb += self.hs_rx_sync[i].eq(int_sync[i][0] | int_sync[i][1] | int_sync[i][2] | int_sync[i][3])
         # connect all these ports to constant 0
@@ -117,4 +120,5 @@ class DPHY_CSIRX_CIL(Module):
         ]
         for p in const0_ports:
             conns["i_{}".format(p)] = 0
-        self.specials += Instance("DPHY", **conns)
+        self.specials.dphy = Instance("DPHY", **conns)
+        self.dphy.attr.add(("LOC", loc))

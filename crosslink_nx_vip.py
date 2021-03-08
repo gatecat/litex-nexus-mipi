@@ -31,8 +31,12 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 from litex.soc.cores.bitbang import I2CMaster
+from litex.soc.cores.freqmeter import FreqMeter
+from litex.soc.cores.gpio import GPIOIn
 
 from litex.build.lattice.oxide import oxide_args, oxide_argdict
+
+from dphy_wrapper import DPHY_CSIRX_CIL
 
 kB = 1024
 mB = 1024*kB
@@ -110,6 +114,29 @@ class BaseSoC(SoCCore):
 
         self.submodules.i2c = I2CMaster(platform.request("i2c", 0))
         self.add_csr("i2c")
+
+        self.submodules.dphy = DPHY_CSIRX_CIL(
+            pads        = platform.request("camera", 0),
+            num_lanes   = 4,
+            clk_mode    = "ENABLED",
+            deskew      = "DISABLED",
+            gearing     = 8,
+            loc         = "TDPHY_CORE2",
+        )
+
+        self.comb += [
+            self.dphy.sync_clk.eq(ClockSignal()),
+            self.dphy.sync_rst.eq(ResetSignal()),
+            self.dphy.pd_dphy.eq(0),
+            self.dphy.hs_rx_en.eq(1),
+        ]
+
+        self.submodules.clk_byte_freq = FreqMeter(period=sys_clk_freq, clk=self.dphy.clk_byte)
+        self.add_csr("clk_byte_freq")
+        self.submodules.hs_rx_data = GPIOIn(pads=self.dphy.hs_rx_data)
+        self.add_csr("hs_rx_data")
+        self.submodules.hs_rx_sync = GPIOIn(pads=self.dphy.hs_rx_sync)
+        self.add_csr("hs_rx_sync")
 
 # Build --------------------------------------------------------------------------------------------
 
