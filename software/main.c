@@ -90,6 +90,8 @@ static void help(void)
 	puts("freq               - Print frequency counter output");
 	puts("data               - Print 32 words of received MIPI data");
 	puts("packet             - Print 128 words of last received packet");
+	puts("image              - Print 60x33 downsampled image");
+
 }
 
 static void reboot_cmd(void)
@@ -115,6 +117,19 @@ static void read_packet_cmd(void)
 		printf("%08x\n", buf[i]);
 }
 
+static void read_image_cmd(void)
+{
+	volatile unsigned *buf = (volatile unsigned *)IMAGE_IO_BASE;
+	for (int y = 0; y < 33; y++) {
+		for (int x = 0; x < 60; x++) {
+			// Nonstandard 24 bit colour mode
+			unsigned pix = buf[y * 60 + x];
+			printf("\e[48;2;%d;%d;%dm ", pix, pix, pix);
+		}
+		printf("\e[0m\n");
+	}
+}
+
 static void console_service(void)
 {
 	char *str;
@@ -135,6 +150,8 @@ static void console_service(void)
 		read_data_cmd();
 	else if(strcmp(token, "packet") == 0)
 		read_packet_cmd();
+	else if(strcmp(token, "image") == 0)
+		read_image_cmd();
 	prompt();
 }
 

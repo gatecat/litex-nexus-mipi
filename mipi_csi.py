@@ -48,3 +48,51 @@ class PacketCapture(Module):
 			port.adr.eq(write_ptr),
 			port.we.eq(write_ptr < depth)
 		]
+
+class ImageCapture(Module):
+	def __init__(self,  data, data_sync, subsample_x=5, subsample_y=20, out_width=120, out_height=54):
+		is_pixels = Signal()
+		subx_ctr = Signal(max=subsample_x)
+		suby_ctr = Signal(max=subsample_y)
+		out_x = Signal(16)
+		out_y = Signal(16)
+		x_hit = Signal()
+		y_hit = Signal()
+		self.specials.mem = Memory(8, out_width * out_height)
+		port = self.mem.get_port(write_capable=True, clock_domain="mipi")
+		self.specials += port
+		data_type = data[24:32]
+		self.sync.mipi += [
+			x_hit.eq(subx_ctr == 0),
+			y_hit.eq(suby_ctr == 0),
+			If(x_hit,
+				out_x.eq(out_x + 1)
+			),
+			If(subx_ctr == subsample_x - 1,
+				subx_ctr.eq(0)
+			).Else(
+				subx_ctr.eq(subx_ctr + 1)
+			),
+			If(data_sync,
+				If(data_type == 0x2B, # RAW10 pixel data
+					If(suby_ctr == subsample_y - 1,
+						suby_ctr.eq(0),
+						out_y.eq(out_y + 1)
+					).Else(
+						suby_ctr.eq(suby_ctr + 1)
+					),
+					out_x.eq(0),
+					subx_ctr.eq(0),
+					is_pixels.eq(1),
+				).Else(
+					is_pixels.eq(0),
+					If(data_type == 0x00, # frame start
+						suby_ctr.eq(0),
+						out_y.eq(0xFFFF),
+					)
+				)
+			),
+			port.adr.eq(out_y * out_width + out_x),
+			port.we.eq(is_pixels & x_hit & y_hit & (out_y < out_height) & (out_x < out_width)),
+			port.dat_w.eq(data[0:8]) # we aren't doing any RAW10 decoding; assume subsample_x is a multiple of 5
+		]

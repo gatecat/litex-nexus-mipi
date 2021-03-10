@@ -163,7 +163,13 @@ class BaseSoC(SoCCore):
         self.submodules.packet_cap = packet_cap
         packet_io = wishbone.SRAM(self.packet_cap.mem, read_only=True)
         self.submodules.packet_io = packet_io
-        self.register_mem("packet_io", 0xb0000000, packet_io.bus)
+        self.register_mem("packet_io", 0xb0000000, packet_io.bus, size=0x4000)
+
+        image_cap = ImageCapture(data=wa.data_out, data_sync=wa.sync_out, subsample_x=10, subsample_y=32, out_width=60, out_height=33)
+        self.submodules.image_cap = image_cap
+        image_io = wishbone.SRAM(self.image_cap.mem, read_only=True)
+        self.submodules.image_io = image_io
+        self.register_mem("image_io", 0xb0010000, image_io.bus, size=0x4000)
 
 # Build --------------------------------------------------------------------------------------------
 
