@@ -103,7 +103,7 @@ static void read_freq_cmd(void)
 static void read_data_cmd(void)
 {
 	for (int i = 0; i < 32; i++)
-		printf("%08x %01x\n", hs_rx_data_in_read(), hs_rx_sync_in_read());
+		printf("%08x %08x %01x\n", dphy_header_in_read(), hs_rx_data_in_read(), hs_rx_sync_in_read());
 }
 
 

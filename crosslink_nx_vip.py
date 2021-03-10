@@ -138,6 +138,15 @@ class BaseSoC(SoCCore):
         self.submodules.hs_rx_sync = GPIOIn(pads=self.dphy.hs_rx_sync)
         self.add_csr("hs_rx_sync")
 
+        self.clock_domains.cd_byte = ClockDomain()
+        self.comb += self.cd_byte.clk.eq(self.dphy.clk_byte)
+        dphy_header = Signal(32)
+        for i in range(0, 4):
+            prev_sync = Signal()
+            self.sync.byte += prev_sync.eq(self.dphy.hs_rx_sync[i])
+            self.sync.byte += If(prev_sync, dphy_header[(8*i):(8*(i+1))].eq(self.dphy.hs_rx_data[(8*i):(8*(i+1))]))
+        self.submodules.dphy_header = GPIOIn(pads=dphy_header)
+        self.add_csr("dphy_header")
 # Build --------------------------------------------------------------------------------------------
 
 def main():
