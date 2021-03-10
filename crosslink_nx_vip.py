@@ -26,6 +26,8 @@ from litex.soc.cores.spi_flash import SpiFlash
 from litex.build.io import CRG
 from litex.build.generic_platform import *
 
+from litex.soc.interconnect import wishbone
+
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
@@ -37,6 +39,7 @@ from litex.soc.cores.gpio import GPIOIn
 from litex.build.lattice.oxide import oxide_args, oxide_argdict
 
 from dphy_wrapper import DPHY_CSIRX_CIL
+from mipi_csi import *
 
 kB = 1024
 mB = 1024*kB
@@ -138,15 +141,30 @@ class BaseSoC(SoCCore):
         self.submodules.hs_rx_sync = GPIOIn(pads=self.dphy.hs_rx_sync)
         self.add_csr("hs_rx_sync")
 
-        self.clock_domains.cd_byte = ClockDomain()
-        self.comb += self.cd_byte.clk.eq(self.dphy.clk_byte)
+        self.clock_domains.cd_mipi = ClockDomain()
+        self.comb += self.cd_mipi.clk.eq(self.dphy.clk_byte)
         dphy_header = Signal(32)
         for i in range(0, 4):
             prev_sync = Signal()
-            self.sync.byte += prev_sync.eq(self.dphy.hs_rx_sync[i])
-            self.sync.byte += If(prev_sync, dphy_header[(8*i):(8*(i+1))].eq(self.dphy.hs_rx_data[(8*i):(8*(i+1))]))
+            self.sync.mipi += prev_sync.eq(self.dphy.hs_rx_sync[i])
+            self.sync.mipi += If(prev_sync, dphy_header[(8*i):(8*(i+1))].eq(self.dphy.hs_rx_data[(8*i):(8*(i+1))]))
         self.submodules.dphy_header = GPIOIn(pads=dphy_header)
         self.add_csr("dphy_header")
+
+        wa = WordAligner(lane_width=8, num_lanes=4, depth=3)
+        swapped_data = Cat(self.dphy.hs_rx_data[24:32], self.dphy.hs_rx_data[8:16], self.dphy.hs_rx_data[16:24], self.dphy.hs_rx_data[0:8])
+        self.sync.mipi += [
+            wa.data_in.eq(swapped_data),
+            wa.sync_in.eq(self.dphy.hs_rx_sync)
+        ]
+        self.submodules.wa = wa
+
+        packet_cap = PacketCapture(data=wa.data_out, data_sync=wa.sync_out, depth=128)
+        self.submodules.packet_cap = packet_cap
+        packet_io = wishbone.SRAM(self.packet_cap.mem, read_only=True)
+        self.submodules.packet_io = packet_io
+        self.register_mem("packet_io", 0xb0000000, packet_io.bus)
+
 # Build --------------------------------------------------------------------------------------------
 
 def main():

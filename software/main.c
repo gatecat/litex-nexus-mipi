@@ -9,6 +9,7 @@
 #include <uart.h>
 #include <console.h>
 #include <generated/csr.h>
+#include <generated/mem.h>
 
 #include "camera.h"
 
@@ -88,6 +89,7 @@ static void help(void)
 	puts("cam_init           - Run camera initialisation");
 	puts("freq               - Print frequency counter output");
 	puts("data               - Print 32 words of received MIPI data");
+	puts("packet             - Print 128 words of last received packet");
 }
 
 static void reboot_cmd(void)
@@ -106,6 +108,12 @@ static void read_data_cmd(void)
 		printf("%08x %08x %01x\n", dphy_header_in_read(), hs_rx_data_in_read(), hs_rx_sync_in_read());
 }
 
+static void read_packet_cmd(void)
+{
+	volatile unsigned *buf = (volatile unsigned *)PACKET_IO_BASE;
+	for (int i = 0; i < 128; i++)
+		printf("%08x\n", buf[i]);
+}
 
 static void console_service(void)
 {
@@ -125,6 +133,8 @@ static void console_service(void)
 		read_freq_cmd();
 	else if(strcmp(token, "data") == 0)
 		read_data_cmd();
+	else if(strcmp(token, "packet") == 0)
+		read_packet_cmd();
 	prompt();
 }
 
