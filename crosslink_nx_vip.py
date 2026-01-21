@@ -15,14 +15,11 @@ import argparse
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
-from litex_boards.platforms import crosslink_nx_vip
-
-from litex_boards.platforms import crosslink_nx_vip
+from litex_boards.platforms import lattice_crosslink_nx_vip
 
 from litehyperbus.core.hyperbus import HyperRAM
 
 from litex.soc.cores.ram import NXLRAM
-from litex.soc.cores.spi_flash import SpiFlash
 from litex.build.io import CRG
 from litex.build.generic_platform import *
 
@@ -30,6 +27,7 @@ from litex.soc.interconnect import wishbone
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
+from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 from litex.soc.cores.bitbang import I2CMaster
@@ -80,7 +78,7 @@ class BaseSoC(SoCCore):
         "csr":              0xf0000000,
     }
     def __init__(self, sys_clk_freq=int(75e6), hyperram="none", toolchain="radiant", **kwargs):
-        platform = crosslink_nx_vip.Platform(toolchain=toolchain)
+        platform = lattice_crosslink_nx_vip.Platform(toolchain=toolchain)
         platform.add_platform_command("ldc_set_sysconfig {{MASTER_SPI_PORT=SERIAL}}")
 
         # Disable Integrated SRAM since we want to instantiate LRAM specifically for it
@@ -98,13 +96,14 @@ class BaseSoC(SoCCore):
         # 128KB LRAM (used as SRAM) ------------------------------------------------------------
         size = 128*kB
         self.submodules.spram = NXLRAM(32, size)
-        self.register_mem("sram", self.mem_map["sram"], self.spram.bus, size)
+        self.bus.add_slave("sram", slave=self.spram.bus, region=SoCRegion(origin=self.mem_map["sram"],
+                size=size))
         # Use HyperRAM generic PHY as main ram -----------------------------------------------------
         size = 8*1024*kB
         hr_pads = platform.request("hyperram", 0)
         self.submodules.hyperram = HyperRAM(hr_pads)
-        self.register_mem("main_ram", self.mem_map["main_ram"], self.hyperram.bus, size)
-
+        self.bus.add_slave("main_ram", slave=self.hyperram.bus, region=SoCRegion(origin=self.mem_map["main_ram"],
+                size=size, mode="rwx"))
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
             pads         = Cat(*[platform.request("user_led", i) for i in range(4)]),
@@ -163,13 +162,13 @@ class BaseSoC(SoCCore):
         self.submodules.packet_cap = packet_cap
         packet_io = wishbone.SRAM(self.packet_cap.mem, read_only=True)
         self.submodules.packet_io = packet_io
-        self.register_mem("packet_io", 0xb0000000, packet_io.bus, size=0x4000)
+        self.bus.add_slave("packet_io", slave=packet_io.bus, region=SoCRegion(origin=0xb0000000, size=0x4000, mode="rw", cached=False))
 
         image_cap = ImageCapture(data=wa.data_out, data_sync=wa.sync_out, subsample_x=10, subsample_y=32, out_width=60, out_height=33)
         self.submodules.image_cap = image_cap
         image_io = wishbone.SRAM(self.image_cap.mem, read_only=True)
         self.submodules.image_io = image_io
-        self.register_mem("image_io", 0xb0010000, image_io.bus, size=0x4000)
+        self.bus.add_slave("image_io", slave=image_io.bus, region=SoCRegion(origin=0xb0010000, size=0x4000, mode="rw", cached=False))
 
 # Build --------------------------------------------------------------------------------------------
 

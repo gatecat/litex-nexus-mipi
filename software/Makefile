@@ -1,4 +1,4 @@
-BUILD_DIR=../build/crosslink_nx_vip
+BUILD_DIR=../build/lattice_crosslink_nx_vip
 
 include $(BUILD_DIR)/software/include/generated/variables.mak
 include $(SOC_DIRECTORY)/software/common.mak
@@ -15,14 +15,15 @@ all: software.bin
 	chmod -x $@
 
 software.elf: $(OBJECTS)
-	$(LD) $(LDFLAGS) \
+	$(CC) $(LDFLAGS) \
 		-T linker.ld \
 		-N -o $@ \
-		$(BUILD_DIR)/software/libbase/crt0.o \
+		$(BUILD_DIR)/software/bios/crt0.o \
 		$(OBJECTS) \
 		-L$(BUILD_DIR)/software/libbase \
+		-L$(BUILD_DIR)/software/libc \
 		-L$(BUILD_DIR)/software/libcompiler_rt \
-		-lbase-nofloat -lcompiler_rt
+		-lc -lbase -lcompiler_rt
 	chmod -x $@
 
 main.o: main.c
