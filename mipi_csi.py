@@ -58,7 +58,7 @@ class ImageCapture(Module):
 		out_y = Signal(16)
 		x_hit = Signal()
 		y_hit = Signal()
-		self.specials.mem = Memory(8, out_width * out_height)
+		self.specials.mem = Memory(16, out_width * out_height)
 		port = self.mem.get_port(write_capable=True, clock_domain="mipi")
 		self.specials += port
 		data_type = data[24:32]
@@ -94,5 +94,5 @@ class ImageCapture(Module):
 			),
 			port.adr.eq(out_y * out_width + out_x),
 			port.we.eq(is_pixels & x_hit & y_hit & (out_y < out_height) & (out_x < out_width)),
-			port.dat_w.eq(data[0:8]) # we aren't doing any RAW10 decoding; assume subsample_x is a multiple of 5
+			port.dat_w.eq(data[0:16]) # we aren't doing any RAW10 decoding; assume subsample_x is a multiple of 5
 		]

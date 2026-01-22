@@ -120,11 +120,16 @@ static void read_packet_cmd(void)
 static void read_image_cmd(void)
 {
 	volatile unsigned *buf = (volatile unsigned *)IMAGE_IO_BASE;
-	for (int y = 0; y < 33; y++) {
-		for (int x = 0; x < 60; x++) {
+	// GBRGB
+	for (int y = 0; y < 54; y++) {
+		for (int x = 0; x < 96; x++) {
 			// Nonstandard 24 bit colour mode
-			unsigned pix = buf[y * 60 + x];
-			printf("\e[48;2;%d;%d;%dm ", pix, pix, pix);
+			// GBRG ?
+			unsigned g0 = (buf[(y * 2) * 96 + x] >> 8) & 0xFF;
+			unsigned r = buf[(y * 2) * 96 + x] & 0xFF;
+			unsigned b = (buf[(y * 2 + 1) * 96 + x] >> 8) & 0xFF;
+
+			printf("\e[48;2;%d;%d;%dm ", r, g0, b);
 		}
 		printf("\e[0m\n");
 	}

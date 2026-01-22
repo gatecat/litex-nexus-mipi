@@ -168,6 +168,10 @@ static const struct imx258_reg lattice_rd_cfg[] = {
 	{0x4040, 0x00}, // clock mode during blanking - continuous
 	{0x0350, 0x00}, // frame length control - auto
 	{0x0808, 0x00}, // DPHY control - use UI control
+
+	{0x0600, 0x00}, // test pattern mode MSB
+	{0x0601, 0x00}, // test pattern mode LSB
+
 	{0x0100, 0x01}, // start streaming
 };
 
