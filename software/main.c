@@ -121,8 +121,8 @@ static void read_image_cmd(void)
 {
 	volatile unsigned *buf = (volatile unsigned *)IMAGE_IO_BASE;
 	// GBRGB
-	for (int y = 0; y < 54; y++) {
-		for (int x = 0; x < 96; x++) {
+	for (int y = 0; y < 39; y++) {
+		for (int x = 0; x < 52; x++) {
 			// Nonstandard 24 bit colour mode
 			// GBRG ?
 			unsigned g0 = (buf[(y * 2) * 96 + x] >> 8) & 0xFF;
