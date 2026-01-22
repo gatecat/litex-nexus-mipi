@@ -125,9 +125,9 @@ static void read_image_cmd(void)
 		for (int x = 0; x < 96; x++) {
 			// Nonstandard 24 bit colour mode
 			// GBRG ?
-			unsigned g0 = (buf[(y * 2) * 96 + x]) & 0xFF;
-			unsigned r = (buf[(y * 2) * 96 + x] >> 8) & 0xFF;
-			unsigned b = (buf[(y * 2 + 1) * 96 + x]) & 0xFF;
+			unsigned g0 = (buf[(y * 2) * 96 + x] >> 8) & 0xFF;
+			unsigned r = (buf[(y * 2) * 96 + x]) & 0xFF;
+			unsigned b = (buf[(y * 2 + 1) * 96 + x] >> 8) & 0xFF;
 
 			printf("\e[48;2;%d;%d;%dm ", r, g0, b);
 		}

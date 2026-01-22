@@ -158,7 +158,7 @@ class BaseSoC(SoCCore):
         ]
         self.submodules.wa = wa
 
-        packet_cap = PacketCapture(data=self.dphy.hs_rx_data, data_sync=self.dphy.hs_rx_sync[0], depth=1024)
+        packet_cap = PacketCapture(data=wa.data_out, data_sync=wa.sync_out, depth=1024)
         self.submodules.packet_cap = packet_cap
         packet_io = wishbone.SRAM(self.packet_cap.mem, read_only=True)
         self.submodules.packet_io = packet_io

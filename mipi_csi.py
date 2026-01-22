@@ -62,9 +62,11 @@ class ImageCapture(Module):
 		port = self.mem.get_port(write_capable=True, clock_domain="mipi")
 		self.specials += port
 		data_type = data[0:8]
-		self.sync.mipi += [
+		self.comb += [
 			x_hit.eq(subx_ctr == 0),
 			y_hit.eq(suby_ctr == 0),
+		]
+		self.sync.mipi += [
 			If(x_hit,
 				out_x.eq(out_x + 1)
 			),
