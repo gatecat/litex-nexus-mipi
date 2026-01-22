@@ -151,20 +151,20 @@ class BaseSoC(SoCCore):
         self.add_csr("dphy_header")
 
         wa = WordAligner(lane_width=8, num_lanes=4, depth=3)
-        swapped_data = Cat(self.dphy.hs_rx_data[24:32], self.dphy.hs_rx_data[8:16], self.dphy.hs_rx_data[16:24], self.dphy.hs_rx_data[0:8])
+#        swapped_data = Cat(self.dphy.hs_rx_data[24:32], self.dphy.hs_rx_data[8:16], self.dphy.hs_rx_data[16:24], self.dphy.hs_rx_data[0:8])
         self.sync.mipi += [
-            wa.data_in.eq(swapped_data),
+            wa.data_in.eq(self.dphy.hs_rx_data),
             wa.sync_in.eq(self.dphy.hs_rx_sync)
         ]
         self.submodules.wa = wa
 
-        packet_cap = PacketCapture(data=wa.data_out, data_sync=wa.sync_out, depth=128)
+        packet_cap = PacketCapture(data=self.dphy.hs_rx_data, data_sync=self.dphy.hs_rx_sync[0], depth=1024)
         self.submodules.packet_cap = packet_cap
         packet_io = wishbone.SRAM(self.packet_cap.mem, read_only=True)
         self.submodules.packet_io = packet_io
         self.bus.add_slave("packet_io", slave=packet_io.bus, region=SoCRegion(origin=0xb0000000, size=0x4000, mode="rw", cached=False))
 
-        image_cap = ImageCapture(data=wa.data_out, data_sync=wa.sync_out, subsample_x=5, subsample_y=10, out_width=96, out_height=108)
+        image_cap = ImageCapture(data=wa.data_out, data_sync=wa.sync_out, subsample_x=5, subsample_y=9, out_width=96, out_height=108)
         self.submodules.image_cap = image_cap
         image_io = wishbone.SRAM(self.image_cap.mem, read_only=True)
         self.submodules.image_io = image_io
