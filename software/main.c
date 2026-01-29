@@ -136,6 +136,17 @@ static void read_image_cmd(void)
 	}
 }
 
+static void write_lcd_cmd(void)
+{
+	while (1) {
+		if (readchar_nonblock()) {
+			readchar();
+			break;
+		}
+		lcd_write();
+	}
+}
+
 static void console_service(void)
 {
 	char *str;
@@ -158,6 +169,8 @@ static void console_service(void)
 		read_packet_cmd();
 	else if(strcmp(token, "image") == 0)
 		read_image_cmd();
+	else if(strcmp(token, "lcd") == 0)
+		write_lcd_cmd();
 	prompt();
 }
 

@@ -1,6 +1,8 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef LCD_H
+#define LCD_H
 
 void lcd_init(void);
+
+void lcd_write(void);
 
 #endif
