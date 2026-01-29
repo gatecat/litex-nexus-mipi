@@ -143,7 +143,30 @@ static void write_lcd_cmd(void)
 			readchar();
 			break;
 		}
-		lcd_write();
+		lcd_write_begin();
+
+		volatile unsigned *buf = (volatile unsigned *)IMAGE_IO_BASE;
+		// GBRGB
+		for (int y = 0; y < 128; y++) {
+			for (int x = 0; x < 128; x++) {
+
+				int cx = (x / 2);
+				int cy = (y / 2);
+
+				// Nonstandard 24 bit colour mode
+				// GBRG ?
+				if (cy > 54) {
+					lcd_write_data(0x0);
+				} else {
+					unsigned g0 = (buf[(cy * 2) * 96 + cx] >> 8) & 0xFF;
+					unsigned r = (buf[(cy * 2) * 96 + cx]) & 0xFF;
+					unsigned b = (buf[(cy * 2 + 1) * 96 + cx] >> 8) & 0xFF;
+					lcd_write_data( (((r >> 3) & 0x1F) << 11) | (((g0 >> 2) & 0x3F) << 5) | (((b >> 3) & 0x1F) << 0));
+				}
+
+			}
+		}
+
 	}
 }
 

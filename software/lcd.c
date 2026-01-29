@@ -115,7 +115,7 @@ static void lcd_write_param(uint8_t data) {
 }
 
 
-static void lcd_write_data(uint16_t data) {
+void lcd_write_data(uint16_t data) {
 	lcd_gpio_out_write(0x03);
 	lcd_spi_cs_write(0x01);
 	lcd_spi_mosi_write(data);
@@ -178,9 +178,9 @@ void lcd_init(void) {
     lcd_write_param(0x7F);                   //     XEND = 127
     lcd_write_cmd(ST77XX_RASET);              //  2: Row addr set, 4 args, no delay:
     lcd_write_param(0x00);
-    lcd_write_param(0x00);                   //     XSTART = 0
+    lcd_write_param(0x20);                   //     XSTART = 0
     lcd_write_param(0x00);
-    lcd_write_param(0x7F);                 //     XEND = 127
+    lcd_write_param(0x7F+0x20);                 //     XEND = 127
 
     cdelay(1500);                          //     150 ms delay
 
@@ -199,10 +199,6 @@ void lcd_init(void) {
    	}
 }
 
-void lcd_write(void) {
-   	for (int y = 0; y < 128; y++) {
-   		for (int x = 0; x < 128; x++) {
-   			lcd_write_data(ST7735_RED);
-   		}
-   	}
+void lcd_write_begin(void) {
+   	lcd_write_cmd(ST77XX_RAMWR);
 }
