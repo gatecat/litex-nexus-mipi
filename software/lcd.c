@@ -100,16 +100,16 @@ static void lcd_write_cmd(uint8_t data) {
 	lcd_gpio_out_write(0x02);
 	lcd_spi_cs_write(0x01);
 	lcd_spi_mosi_write(data);
-	lcd_spi_control_write(0x108); // start 8 bit write
+	lcd_spi_control_write(0x0801); // start 8 bit write
 	while ((lcd_spi_status_read() & 0x1) == 0x0)
 		;
 }
 
 static void lcd_write_param(uint8_t data) {
-	lcd_gpio_out_write(0x02);
+	lcd_gpio_out_write(0x03);
 	lcd_spi_cs_write(0x01);
 	lcd_spi_mosi_write(data);
-	lcd_spi_control_write(0x108); // start 8 bit write
+	lcd_spi_control_write(0x0801); // start 8 bit write
 	while ((lcd_spi_status_read() & 0x1) == 0x0)
 		;
 }
@@ -119,7 +119,7 @@ static void lcd_write_data(uint16_t data) {
 	lcd_gpio_out_write(0x03);
 	lcd_spi_cs_write(0x01);
 	lcd_spi_mosi_write(data);
-	lcd_spi_control_write(0x110); // start 8 bit write
+	lcd_spi_control_write(0x1001); // start 8 bit write
 	while ((lcd_spi_status_read() & 0x1) == 0x0)
 		;
 }
