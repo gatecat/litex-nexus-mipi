@@ -39,6 +39,6 @@ clean:
 	$(RM) $(OBJECTS) $(OBJECTS:.o=.d) software.elf software.bin .*~ *~
 
 load: software.bin
-	$(SOC_DIRECTORY)/../tools/litex_term.py  --serial-boot --kernel $< --kernel-adr 0x50000000  /dev/ttyUSB1
+	$(SOC_DIRECTORY)/../tools/litex_term.py  --serial-boot --kernel $< --kernel-adr 0x40000000  /dev/ttyUSB1
 
 .PHONY: all main.o clean load

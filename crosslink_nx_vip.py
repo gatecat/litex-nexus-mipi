@@ -47,15 +47,16 @@ mB = 1024*kB
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq):
+    def __init__(self, platform, clkin, sys_clk_freq):
         self.rst = Signal()
         self.clock_domains.cd_sys = ClockDomain()
         self.clock_domains.cd_por = ClockDomain()
 
         # TODO: replace with PLL
         # Clocking
-        self.submodules.sys_clk = sys_osc = NXOSCA()
-        sys_osc.create_hf_clk(self.cd_sys, sys_clk_freq)
+        self.submodules.sys_pll = sys_pll = NXPLL()
+        sys_pll.register_clkin(clkin, 27e6)
+        sys_pll.create_clkout(self.cd_sys, sys_clk_freq)
         platform.add_period_constraint(self.cd_sys.clk, 1e9/sys_clk_freq)
         # use cam_reset here because it's also hardwired to the reset of the cameras
         rst_n = platform.request("cam_reset")
@@ -109,7 +110,8 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq)
+        refclk = platform.request("clk27_0")
+        self.submodules.crg = _CRG(platform, refclk, sys_clk_freq)
 
         # 128KB LRAM (used as SRAM) ------------------------------------------------------------
         size = 128*kB
@@ -128,7 +130,6 @@ class BaseSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
         self.add_csr("leds")
 
-        refclk = platform.request("clk27_0")
         cam_mclk = platform.request("camera_mclk", 0)
         self.comb += cam_mclk.eq(refclk)
 
@@ -213,8 +214,8 @@ def main():
         sys_clk_freq = int(float(args.sys_clk_freq)),
         hyperram     = args.with_hyperram,
         toolchain    = args.toolchain,
-        cpu_type     = "picorv32",
-        cpu_variant  = "minimal",
+        cpu_type     = "vexriscv",
+        cpu_variant  = "lite",
         integrated_rom_size = 32768,
     )
     builder = Builder(soc, **builder_argdict(args))
