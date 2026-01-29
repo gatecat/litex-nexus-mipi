@@ -58,6 +58,8 @@ class ImageCapture(Module):
 		out_y = Signal(16)
 		x_hit = Signal()
 		y_hit = Signal()
+		self.last_line_count = Signal(16)
+		line_count = Signal(16)
 		self.specials.mem = Memory(16, out_width * out_height)
 		port = self.mem.get_port(write_capable=True, clock_domain="mipi")
 		self.specials += port
@@ -86,12 +88,16 @@ class ImageCapture(Module):
 					out_x.eq(0),
 					subx_ctr.eq(0),
 					is_pixels.eq(1),
+					line_count.eq(line_count + 1),
 				).Else(
 					is_pixels.eq(0),
 					If(data_type == 0x00, # frame start
 						suby_ctr.eq(0),
 						out_y.eq(0xFFFF),
-					)
+						line_count.eq(0),
+						self.last_line_count.eq(line_count),
+					),
+
 				)
 			),
 			port.adr.eq(out_y * out_width + out_x),

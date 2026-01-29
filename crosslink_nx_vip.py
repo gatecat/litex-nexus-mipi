@@ -196,6 +196,9 @@ class BaseSoC(SoCCore):
         self.submodules.image_io = image_io
         self.bus.add_slave("image_io", slave=image_io.bus, region=SoCRegion(origin=0xb0010000, size=0x10000, mode="rw", cached=False))
 
+        self.submodules.line_count = GPIOIn(pads=image_cap.last_line_count)
+        self.add_csr("line_count")
+
 # Build --------------------------------------------------------------------------------------------
 
 def main():

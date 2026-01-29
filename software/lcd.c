@@ -124,6 +124,21 @@ void lcd_write_data(uint16_t data) {
 		;
 }
 
+static const uint8_t lcd_gmctrp1[16] = {
+	  0x02, 0x1c, 0x07, 0x12,       //     (Not entirely necessary, but provides
+      0x37, 0x32, 0x29, 0x2d,       //      accurate colors)
+      0x29, 0x25, 0x2B, 0x39,
+      0x00, 0x01, 0x03, 0x10,
+};
+
+
+static const uint8_t lcd_gmctrn1[16] = {
+      0x03, 0x1d, 0x07, 0x06,       //     (Not entirely necessary, but provides
+      0x2E, 0x2C, 0x29, 0x2D,       //      accurate colors)
+      0x2E, 0x2E, 0x37, 0x3F,
+      0x00, 0x00, 0x02, 0x10,
+};
+
 void lcd_init(void) {
 	reset_lcd();
 
@@ -182,6 +197,14 @@ void lcd_init(void) {
     lcd_write_param(0x00);
     lcd_write_param(0x7F+0x20);                 //     XEND = 127
 
+    lcd_write_cmd(ST7735_GMCTRP1);
+    for (unsigned i = 0; i < 16; i++)
+    	lcd_write_param(lcd_gmctrp1[i]);
+
+    lcd_write_cmd(ST7735_GMCTRN1);
+    for (unsigned i = 0; i < 16; i++)
+    	lcd_write_param(lcd_gmctrn1[i]);
+
     cdelay(1500);                          //     150 ms delay
 
    	lcd_write_cmd(ST77XX_NORON);
@@ -189,6 +212,7 @@ void lcd_init(void) {
     cdelay(1500);                          //     150 ms delay
 
    	lcd_write_cmd(ST77XX_DISPON);
+
 
 
    	lcd_write_cmd(ST77XX_RAMWR);

@@ -111,10 +111,15 @@ static void read_data_cmd(void)
 		printf("%08x %08x %01x\n", dphy_header_in_read(), hs_rx_data_in_read(), hs_rx_sync_in_read());
 }
 
+static void read_line_count_cmd(void)
+{
+	printf("Line count: %d\n", line_count_in_read());
+}
+
 static void read_packet_cmd(void)
 {
 	volatile unsigned *buf = (volatile unsigned *)PACKET_IO_BASE;
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < 32; i++)
 		printf("%08x\n", buf[i]);
 }
 
@@ -150,17 +155,18 @@ static void write_lcd_cmd(void)
 		for (int y = 0; y < 128; y++) {
 			for (int x = 0; x < 128; x++) {
 
-				int cx = (x / 2);
-				int cy = (y / 2);
+				int cx = (x * 96) / 128;
+				int cy = (y * 54) / 128;
 
 				// Nonstandard 24 bit colour mode
 				// GBRG ?
-				if (cy > 54) {
+				if (cx >= 96 || cy >= 54) {
 					lcd_write_data(0x0);
 				} else {
 					unsigned g0 = (buf[(cy * 2) * 96 + cx] >> 8) & 0xFF;
 					unsigned r = (buf[(cy * 2) * 96 + cx]) & 0xFF;
 					unsigned b = (buf[(cy * 2 + 1) * 96 + cx] >> 8) & 0xFF;
+
 					lcd_write_data( (((r >> 3) & 0x1F) << 11) | (((g0 >> 2) & 0x3F) << 5) | (((b >> 3) & 0x1F) << 0));
 				}
 
@@ -194,6 +200,8 @@ static void console_service(void)
 		read_image_cmd();
 	else if(strcmp(token, "lcd") == 0)
 		write_lcd_cmd();
+	else if(strcmp(token, "lines") == 0)
+		read_line_count_cmd();
 	prompt();
 }
 
