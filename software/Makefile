@@ -3,7 +3,7 @@ BUILD_DIR=../build/lattice_crosslink_nx_vip
 include $(BUILD_DIR)/software/include/generated/variables.mak
 include $(SOC_DIRECTORY)/software/common.mak
 
-OBJECTS=isr.o main.o camera.o
+OBJECTS=isr.o main.o camera.o lcd.o
 
 all: software.bin
 

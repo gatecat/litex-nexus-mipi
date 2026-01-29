@@ -12,6 +12,7 @@
 #include <generated/mem.h>
 
 #include "camera.h"
+#include "lcd.h"
 
 /*-----------------------------------------------------------------------*/
 /* Uart                                                                  */
@@ -167,6 +168,8 @@ int main(void)
 	irq_setie(1);
 #endif
 	uart_init();
+
+	lcd_init();
 
 	camera_init();
 

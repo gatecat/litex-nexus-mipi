@@ -20,6 +20,7 @@ from litex_boards.platforms import lattice_crosslink_nx_vip
 from litehyperbus.core.hyperbus import HyperRAM
 
 from litex.soc.cores.ram import NXLRAM
+from litex.soc.cores.spi import SPIMaster
 from litex.build.io import CRG
 from litex.build.generic_platform import *
 
@@ -32,7 +33,7 @@ from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 from litex.soc.cores.bitbang import I2CMaster
 from litex.soc.cores.freqmeter import FreqMeter
-from litex.soc.cores.gpio import GPIOIn
+from litex.soc.cores.gpio import GPIOIn, GPIOOut
 
 from litex.build.lattice.oxide import oxide_args, oxide_argdict
 
@@ -81,6 +82,23 @@ class BaseSoC(SoCCore):
         platform = lattice_crosslink_nx_vip.Platform(toolchain=toolchain)
         platform.add_platform_command("ldc_set_sysconfig {{MASTER_SPI_PORT=SERIAL}}")
 
+        _lcd_pmod_ios = [
+            ("lcd_spi", 0,
+                Subsignal("clk",  Pins("PMOD0:1")),
+                Subsignal("mosi",  Pins("PMOD0:2")),
+                Subsignal("miso",  Pins("PMOD0:3")),
+                Subsignal("cs_n",  Pins("PMOD0:4")),
+                Misc("SLEWRATE=FAST"),
+                IOStandard("LVCMOS33"),
+             ),
+            ("lcd_gpio", 0,
+                Pins("PMOD0:5 PMOD0:6"),
+                Misc("SLEWRATE=FAST"),
+                IOStandard("LVCMOS33"),
+             ),
+        ]
+        platform.add_extension(_lcd_pmod_ios)
+
         # Disable Integrated SRAM since we want to instantiate LRAM specifically for it
         kwargs["integrated_sram_size"] = 0
 
@@ -116,6 +134,13 @@ class BaseSoC(SoCCore):
 
         self.submodules.i2c = I2CMaster(platform.request("i2c", 0))
         self.add_csr("i2c")
+
+        self.submodules.lcd_spi = SPIMaster(platform.request("lcd_spi", 0),
+            data_width=16, sys_clk_freq=sys_clk_freq, spi_clk_freq=4000000, mode="aligned")
+        self.add_csr("lcd_spi")
+
+        self.submodules.lcd_gpio = GPIOOut(platform.request("lcd_gpio", 0))
+        self.add_csr("lcd_gpio")
 
         self.submodules.dphy = DPHY_CSIRX_CIL(
             pads        = platform.request("camera", 0),
